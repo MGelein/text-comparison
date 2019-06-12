@@ -2,6 +2,8 @@
 const {compare} = require('./src/textcomparison');
 //Contains the default settings that can be modified
 const settings = {};
+//the chalk module allows coloring of output
+const chalk = require('chalk');
 //Default to 6 size of ngram characters
 settings.ngram = 6;
 //Default output file name
@@ -16,8 +18,13 @@ const args = process.argv.splice(2);
 if(args.length < 1) displayHelp();
 else parseArgs(args);
 
-//After we have parsed the arguments, now start the actual comparison process
-compare(settings);
+//After we have parsed the arguments, now start the actual comparison process, if all prerequisites are met
+if(settings.fileDescriptors.length > 1){
+    //If we have enough files, start the comparison
+    compare(settings);
+}else{
+    console.log(chalk.red("Aborting: At least two filedescriptors must be given for a comparison to be made..."));
+}
 
 
 /**
