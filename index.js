@@ -1,9 +1,13 @@
 //We need the actual textcomparison library for its own compare function
 const {compare} = require('./src/textcomparison');
+//Contains the default settings that can be modified
+const settings = {};
 //Default to 6 size of ngram characters
-let ngram = 6;
+settings.ngram = 6;
 //Default output file name
-let outputFile = "./output.tsv";
+settings.outputFile = "./output.tsv";
+//List of filenames or urls that we want to compare
+settings.fileDescriptors = [];
 
 //Contains all the command line arguments that are relevant for us, so anything after the command name
 const args = process.argv.splice(2);
@@ -12,19 +16,37 @@ const args = process.argv.splice(2);
 if(args.length < 1) displayHelp();
 else parseArgs(args);
 
+//After we have parsed the arguments, now start the actual comparison process
+compare(settings);
+
 
 /**
  * Parses the array of command line arguments
  */
 function parseArgs(args){
-    for(let arg of args){
+    for(let i = 0; i < args.length; i++){
+        let arg = args[i];
         arg = arg.trim().toLowerCase();
 
         if(arg === '-h' || arg === '--help' || arg === '?') {
             displayHelp();
-            return;//Don't do anything else displaying help
+        }else if(arg === '-n' || arg === '--ngram'){
+            //See if it is a valid location and a number
+            if(i + 1 < args.length && !isNaN(args[i + 1])){
+                //If so overwrite the n-gram setting
+                settings.ngram = args[i + 1];
+                i++//Skip the next one
+            }
+        }else if(arg === '-o' || arg === '--output'){
+            //See if this is a valid index
+            if(i + 1 < args.length){
+                settings.outputFile = args[i + 1];
+                i++;//Skip the next one
+            }
+        }else{
+            //If it is an unrecognized argument, assume it's a file
+            settings.fileDescriptors.push(arg);
         }
-        
     }
 }
 
@@ -40,4 +62,6 @@ The following parameters are supported by this comparison utility:
 --help or -h    display this menu
     `
     console.log(output);
+    //Always exit after displaying help
+    process.exit();
 }
