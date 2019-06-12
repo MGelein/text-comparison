@@ -10,6 +10,10 @@ settings.ngram = 6;
 settings.outputFile = "./output.tsv";
 //List of filenames or urls that we want to compare
 settings.fileDescriptors = [];
+//If we need to convert the whole texts to lowercase before comparison
+settings.lowercase = false;
+//If we want to keep whitespace
+settings.whitespace = false;
 
 //Contains all the command line arguments that are relevant for us, so anything after the command name
 const args = process.argv.splice(2);
@@ -50,7 +54,12 @@ function parseArgs(args){
                 settings.outputFile = args[i + 1];
                 i++;//Skip the next one
             }
-        }else{
+        }else if(arg === '-l' || arg === '--lowercase'){
+            settings.lowercase = true;
+        }else if(arg === '-w' || arg === '--whitespace'){
+            settings.whitespace = true;
+        }
+        else{
             //If it is an unrecognized argument, assume it's a file
             settings.fileDescriptors.push(arg);
         }
@@ -64,9 +73,11 @@ function displayHelp(){
     let output = `Text Comparison, Made by Mees Gelein, licensed under MIT (2019).
 
 The following parameters are supported by this comparison utility:
---ngram or -n   sets the ngram size. Default 6. This is in CHARACTERS!
---output or -o  sets the name of the output file
---help or -h    display this menu
+--whitespace or -w  Default OFF. Keeps any whitespace in the comparison.
+--lowercase or -l   Default OFF. converts the complete text into lowercase, since casing is usually not very important.
+--ngram or -n       Default 6. sets the ngram size. This is in CHARACTERS!
+--output or -o      Default output.tsv. sets the name of the output file.
+--help or -h        display this menu
     `
     console.log(output);
     //Always exit after displaying help
