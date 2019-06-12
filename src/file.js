@@ -37,6 +37,13 @@ function getFileFromDescriptor(desc) {
         let secure = desc.indexOf('https') > -1;
         let module = secure ? https : http;
         module.get(desc, response => {
+            //If we have a non-200 statuscode
+            if (response.statusCode < 200 || response.statusCode > 299) {
+                pending.splice(pending.indexOf(desc), 1);
+                console.log(chalk.red("Received status code: [" + response.statusCode + "] Could not open url: " + desc));
+                //Abort this one
+                return;
+            }
             console.log("Requesting remote data from: " + desc);
             let rawData = "";
             //If we receive more data, add it to the rawData var
@@ -78,7 +85,7 @@ function createFileObject(description, textContents) {
     if (pending.length == 0) {
         if (files.length > 1) {
             fileCallback(files);
-        }else{
+        } else {
             console.log(chalk.red("Aborting: Too few valid files. You should at least provide 2 valid files for comparison!"));
             process.exit();
         }
