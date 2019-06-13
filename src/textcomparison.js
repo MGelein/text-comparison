@@ -44,7 +44,8 @@ function setFiles(list){
  */
 function createDicts(){
     //Do this for each file
-    for(file of files){
+    for(let i = 0; i < files.length; i++){
+        let file = files[i];
         console.log("Creating dictionary " + (file.id + 1) + " of " + files.length + "... " + file.desc);
         file.dict = createDict(file.contents);
         let keys = Object.keys(file.dict);
@@ -58,6 +59,37 @@ function createDicts(){
         console.log("\tThis text has a total of " + keys.length + " unique ngrams. Most common: " + record.name
         + " (" + record.num + " occurences).");
     }
+    //Finally after that do a comparison
+    compareAllFiles();
+}
+
+/**
+ * Compare all the files to every other file
+ */
+function compareAllFiles(){
+    for(let a = 0; a < files.length; a++){
+        for(let b = a + 1; b < files.length; b++){
+            compareFiles(files[a], files[b]);
+        }
+    }
+}
+
+/**
+ * Compares the two given files with eachother
+ * @param {File} fileA 
+ * @param {File} fileB 
+ */
+function compareFiles(fileA, fileB){
+    console.log("------------------------------");
+    console.log("Starting comparison between " + fileA.desc + " and " + fileB.desc);
+    //Find the shared n-grams
+    let keysA = Object.keys(fileA.dict);
+    let keysB = Object.keys(fileB.dict);
+    let keysShared = [];
+    for(keyA of keysA){
+        if(keysB.indexOf(keyA) > -1) keysShared.push(keyA);
+    }
+    console.log("\tThese files share " + keysShared.length + " ngrams.");
 }
 
 /**
