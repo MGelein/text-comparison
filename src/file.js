@@ -68,6 +68,17 @@ function getFileFromDescriptor(desc) {
 }
 
 /**
+ * Exports the provided object to a JSON format
+ * @param {Object} matches 
+ */
+function exportSave(outputFile, matches){
+    console.log("Converting results to JSON object...");
+    let json = JSON.stringify(matches, null, "\t");
+    console.log("Saving JSON to disk as: " + outputFile);
+    fs.writeFileSync(outputFile, json, "utf-8");
+}
+
+/**
  * Creates a new fileobject and appends it to the list of files
  * @param {String} description 
  * @param {String} textContents 
@@ -94,3 +105,4 @@ function createFileObject(description, textContents) {
 
 //Export the right functionality
 exports.getFilesFromDescriptors = getFilesFromDescriptors;
+exports.exportSave = exportSave;

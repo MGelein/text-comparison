@@ -1,5 +1,6 @@
-const {getFilesFromDescriptors} = require("./file");
-const chalk  = require('chalk');
+const {getFilesFromDescriptors, exportSave} = require("./file");
+//Saves the results of the comparison for each file
+const matches = {};
 //the files used in this comparison
 const files = [];
 //If we keep whitespace in the comparison
@@ -8,6 +9,8 @@ var whitespace = false;
 var lowercase = false;
 //The size of the ngrams
 var ngram = 0;
+//The name of the outputfile
+var outputFile = "";
 
 /**
  * Starts a comparison as described by the passed-on settings object
@@ -17,6 +20,7 @@ function doComparison(settings){
     ngram = settings.ngram;
     lowercase = settings.lowercase;
     whitespace = settings.whitespace;
+    outputFile = settings.outputFile;
     //Request for the files to start loading, this might take a while (async)
     getFilesFromDescriptors(settings.fileDescriptors, setFiles);
 }
@@ -35,8 +39,16 @@ function setFiles(list){
         if(!whitespace) file.contents = file.contents.replace(/\s/g, '');
         files.push(file);
     }
+    matches.ids = [];
+    for(file of files){
+        matches.ids.push(file.desc);
+    }
     //Now that we have files, create dictionaries
     createDicts();
+    //Finally after that do a comparison
+    compareAllFiles();
+    //Nnow that we have the result, save the file
+    exportSave(outputFile, matches);
 }
 
 /**
@@ -59,8 +71,6 @@ function createDicts(){
         console.log("\tThis text has a total of " + keys.length + " unique ngrams. Most common: " + record.name
         + " (" + record.num + " occurences).");
     }
-    //Finally after that do a comparison
-    compareAllFiles();
 }
 
 /**
@@ -122,7 +132,81 @@ function expandSharedKeys(fileA, fileB, keysShared){
  * @param {Integer} indexB 
  */
 function expandSharedKey(fileA, fileB, indexA, indexB){
+    const MAX_STRIKES = 5;
+    let strikes = MAX_STRIKES;
+    let textA = fileA.contents;
+    let textB = fileB.contents;
+    let matchL = ngram;
+    let partA, partB;
+    let sim, prevSim = 1;//Previous similarity
+    let leftChecked = false;
+    //Try expanding as long as the expansion fits in the actual text
+    while(indexA > 0 && indexB > 0 && indexA + matchL < textA.length && indexB + matchL < textB.length){
+        //First grab the two parts
+        partA = textA.substr(indexA, matchL);
+        partB = textB.substr(indexB, matchL);
+        sim = getSimilarity(partA, partB);
 
+        //Expand to the correct side
+        if(leftChecked){
+            matchL ++;
+        }else{
+            indexA --;
+            indexB --;
+        }
+
+        //See if the match is improving or not
+        if(sim < prevSim) strikes--;
+        else if(sim > prevSim && strikes < MAX_STRIKES) strikes ++;
+
+        //If the strikes reach 0, either expand to the other side, or just quit now
+        if(strikes == 0){
+            if(leftChecked) break;
+            else{
+                leftChecked = true;
+                strikes = MAX_STRIKES;
+            }
+        }
+        //Set the current similarity to be the similarity for the new one
+        prevSim = sim;
+    }
+    registerMatch(fileA, fileB, indexA, indexB, matchL);
+}
+
+/**
+ * Registers a match that was foudn between these two files
+ * @param {File} fileA 
+ * @param {File} fileB 
+ * @param {Integer} indexInA 
+ * @param {Integer} indexInB 
+ * @param {Integer} matchL 
+ */
+function registerMatch(fileA, fileB, indexInA, indexInB, matchL){
+    //What is the ID of this comparison
+    let compId = fileA.id + "_" + fileB.id;
+    //If the array of matches is not there yet, make it
+    if(matches[compId] == undefined) matches[compId] = [];
+    //Finally register the new match
+    matches[compId].push({
+        indexA: indexInA,
+        indexB: indexInB,
+        length: matchL
+    });
+}
+
+/**
+ * Returns the similarity between two IDENTICAL LENGTH strings
+ * as a floating point number, with 0 being completely different
+ * and 1 being completely identical.
+ * @param {String} stringA 
+ * @param {String} stringB 
+ */
+function getSimilarity(stringA, stringB){
+    let same = 0;
+    for(let i = 0; i < stringA.length; i++){
+        if(stringA.charAt(i) === stringB.charAt(i)) same++;
+    }
+    return same / stringA.length;
 }
 
 /**

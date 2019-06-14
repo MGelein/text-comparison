@@ -7,7 +7,7 @@ const chalk = require('chalk');
 //Default to 6 size of ngram characters
 settings.ngram = 6;
 //Default output file name
-settings.outputFile = "./output.tsv";
+settings.outputFile = "./output.json";
 //List of filenames or urls that we want to compare
 settings.fileDescriptors = [];
 //If we need to convert the whole texts to lowercase before comparison
@@ -76,7 +76,7 @@ The following parameters are supported by this comparison utility:
 --whitespace or -w  Default OFF. Keeps any whitespace in the comparison.
 --lowercase or -l   Default OFF. converts the complete text into lowercase, since casing is usually not very important.
 --ngram or -n       Default 6. sets the ngram size. This is in CHARACTERS!
---output or -o      Default output.tsv. sets the name of the output file.
+--output or -o      Default output.json. sets the name of the output file.
 --help or -h        display this menu
     `
     console.log(output);
