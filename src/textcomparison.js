@@ -90,6 +90,39 @@ function compareFiles(fileA, fileB){
         if(keysB.indexOf(keyA) > -1) keysShared.push(keyA);
     }
     console.log("\tThese files share " + keysShared.length + " ngrams.");
+    console.log("Starting expansion of shared ngrams...");
+    expandSharedKeys(fileA, fileB, keysShared);
+}
+
+/**
+ * Expands the keys that are shared between both files
+ * @param {File} fileA 
+ * @param {File} fileB 
+ * @param {Array} keysShared 
+ */
+function expandSharedKeys(fileA, fileB, keysShared){
+    //For each of the shared keys, find the occruences in both texts
+    for(let sharedKey of keysShared){
+        let occsA = fileA.dict[sharedKey];
+        let occsB = fileB.dict[sharedKey];
+        //Each occurence in text A needs to be compared to each occurence in text B
+        for(occA of occsA){
+            for(occB of occsB){
+                expandSharedKey(fileA, fileB, occA, occB);
+            }
+        }
+    }
+}
+
+/**
+ * Expands a single sharedkey match into a full match
+ * @param {File} fileA 
+ * @param {File} fileB 
+ * @param {Integer} indexA 
+ * @param {Integer} indexB 
+ */
+function expandSharedKey(fileA, fileB, indexA, indexB){
+
 }
 
 /**
