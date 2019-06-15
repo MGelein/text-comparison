@@ -14,6 +14,8 @@ settings.fileDescriptors = [];
 settings.lowercase = false;
 //If we want to keep whitespace
 settings.whitespace = false;
+//If we want to export the fulltext of passages as well
+settings.fullText = false;
 
 //Contains all the command line arguments that are relevant for us, so anything after the command name
 const args = process.argv.splice(2);
@@ -58,6 +60,8 @@ function parseArgs(args){
             settings.lowercase = true;
         }else if(arg === '-w' || arg === '--whitespace'){
             settings.whitespace = true;
+        }else if(arg === '-t' || arg === '--full-text'){
+            settings.fullText = true;
         }
         else{
             //If it is an unrecognized argument, assume it's a file
@@ -77,6 +81,7 @@ The following parameters are supported by this comparison utility:
 --lowercase or -l   Default OFF. converts the complete text into lowercase, since casing is usually not very important.
 --ngram or -n       Default 6. sets the ngram size. This is in CHARACTERS!
 --output or -o      Default output.json. sets the name of the output file.
+--fulltext or -t    Default OFF. Also exports the full matching text, not just the marker
 --help or -h        display this menu
     `
     console.log(output);

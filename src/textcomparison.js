@@ -11,6 +11,8 @@ var lowercase = false;
 var ngram = 0;
 //The name of the outputfile
 var outputFile = "";
+//If we should also export the text of a match
+var fullText = false;
 
 /**
  * Starts a comparison as described by the passed-on settings object
@@ -21,6 +23,7 @@ function doComparison(settings){
     lowercase = settings.lowercase;
     whitespace = settings.whitespace;
     outputFile = settings.outputFile;
+    fullText = settings.fullText;
     //Request for the files to start loading, this might take a while (async)
     getFilesFromDescriptors(settings.fileDescriptors, setFiles);
 }
@@ -190,7 +193,12 @@ function registerMatch(fileA, fileB, indexA, indexB, matchL){
     //Finally register the new match
     let passageA = fileA.id + "@" + indexToMarker(fileA.contents, indexA) + "-" + indexToMarker(fileA.contents, indexA + matchL);
     let passageB = fileB.id + "@" + indexToMarker(fileB.contents, indexB) + "-" + indexToMarker(fileB.contents, indexB + matchL);
-    matches.passages.push([passageA, passageB]);
+    if(!fullText) matches.passages.push([passageA, passageB]);
+    else {
+        matches.passages.push([
+            passageA, fileA.contents.substr(indexA, matchL), passageB, fileB.contents.substr(indexB, matchL)
+        ]);
+    }
 }
 
 /**
