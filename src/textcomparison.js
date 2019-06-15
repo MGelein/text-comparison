@@ -40,6 +40,7 @@ function setFiles(list){
         files.push(file);
     }
     matches.ids = [];
+    matches.passages = [];
     for(file of files){
         matches.ids.push(file.desc);
     }
@@ -177,21 +178,35 @@ function expandSharedKey(fileA, fileB, indexA, indexB){
  * Registers a match that was foudn between these two files
  * @param {File} fileA 
  * @param {File} fileB 
- * @param {Integer} indexInA 
- * @param {Integer} indexInB 
+ * @param {Integer} indexA 
+ * @param {Integer} indexB 
  * @param {Integer} matchL 
  */
-function registerMatch(fileA, fileB, indexInA, indexInB, matchL){
+function registerMatch(fileA, fileB, indexA, indexB, matchL){
     //What is the ID of this comparison
     let compId = fileA.id + "_" + fileB.id;
     //If the array of matches is not there yet, make it
     if(matches[compId] == undefined) matches[compId] = [];
     //Finally register the new match
-    matches[compId].push({
-        indexA: indexInA,
-        indexB: indexInB,
-        length: matchL
-    });
+    let passageA = fileA.id + "@" + indexToMarker(fileA.contents, indexA) + "-" + indexToMarker(fileA.contents, indexA + matchL);
+    let passageB = fileB.id + "@" + indexToMarker(fileB.contents, indexB) + "-" + indexToMarker(fileB.contents, indexB + matchL);
+    matches.passages.push([passageA, passageB]);
+}
+
+/**
+ * Converts an index from a text into a marker (f.e. a[5], 
+ * at the fifth a)
+ * @param {String} text 
+ * @param {Integer} index 
+ */
+function indexToMarker(text, index){
+    let char = text.charAt(index);
+    let counter = 0;
+    let prevText = text.substring(0, index);
+    for(let c of prevText){
+        if(c === char) counter ++;
+    }
+    return char + "[" + counter + "]";
 }
 
 /**
