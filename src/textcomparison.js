@@ -98,11 +98,12 @@ function compareFiles(fileA, fileB){
     console.log("Starting comparison between " + fileA.desc + " and " + fileB.desc);
     //Find the shared n-grams
     let keysA = Object.keys(fileA.dict);
-    let keysB = Object.keys(fileB.dict);
-    let keysShared = [];
-    for(keyA of keysA){
-        if(keysB.indexOf(keyA) > -1) keysShared.push(keyA);
-    }
+    let keysB = new Set(Object.keys(fileB.dict));
+
+    let keysShared = Array.from(
+      new Set(keysA.filter(key => keysB.has(key)))
+    );
+    
     console.log("\tThese files share " + keysShared.length + " ngrams.");
     console.log("Starting expansion of shared ngrams...");
     expandSharedKeys(fileA, fileB, keysShared);
