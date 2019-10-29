@@ -224,19 +224,18 @@ function registerMatch(fileA, fileB, indexA, indexB, matchL) {
  * @param {Integer} index 
  */
 function indexToMarker(file, index) {
-    if(file.markers[index] != undefined){
-        return file.markers[index];
+    if (file.markers[index] == undefined) {
+        let char = file.contents.charAt(index);
+        let counter = 0;
+        let prevText = file.contents.substring(0, index);
+        for (let c of prevText) {
+            if (c === char) counter++;
+        }
+        let marker = char + "[" + counter + "]";
+        file.markers[index] = marker;
     }
-    let text = file.contents;
-    let char = text.charAt(index);
-    let counter = 0;
-    let prevText = text.substring(0, index);
-    for (let c of prevText) {
-        if (c === char) counter++;
-    }
-    let marker = char + "[" + counter + "]";
-    file.markers[index] = marker;
-    return marker;
+    //Return the marker that has been registered for this index
+    return file.markers[index];
 }
 
 /**
