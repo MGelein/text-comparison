@@ -96,6 +96,7 @@ function compareAllFiles() {
 function compareFiles(fileA, fileB) {
     console.log("------------------------------");
     console.log("Starting comparison between " + fileA.desc + " and " + fileB.desc);
+    let startTime = (new Date()).getTime();
     //Find the shared n-grams
     let keysA = Object.keys(fileA.dict);
     let keysB = new Set(Object.keys(fileB.dict));
@@ -107,6 +108,8 @@ function compareFiles(fileA, fileB) {
     console.log("\tThese files share " + keysShared.length + " ngrams.");
     console.log("Starting expansion of shared ngrams...");
     expandSharedKeys(fileA, fileB, keysShared);
+    let endTime = (new Date().getTime());
+    console.log("The comparison took " + (endTime - startTime) + " ms");
 }
 
 /**
@@ -142,15 +145,16 @@ function expandSharedKey(fileA, fileB, indexA, indexB) {
     let textA = fileA.contents;
     let textB = fileB.contents;
     let matchL = ngram;
-    let partA, partB;
+    let same = 0;
     let sim, prevSim = 1;//Previous similarity
     let leftChecked = false;
     //Try expanding as long as the expansion fits in the actual text
     while (indexA > 0 && indexB > 0 && indexA + matchL < textA.length && indexB + matchL < textB.length) {
-        //First grab the two parts
-        partA = textA.substr(indexA, matchL);
-        partB = textB.substr(indexB, matchL);
-        sim = getSimilarity(partA, partB);
+        same = 0;
+        for (let i = 0; i < matchL; i++) {
+            if (textA.charAt(indexA + i) === textB.charAt(indexB + i)) same++;
+        }
+        sim = same / matchL;
 
         //Expand to the correct side
         if (leftChecked) {
@@ -192,8 +196,8 @@ function registerMatch(fileA, fileB, indexA, indexB, matchL) {
     //If the array of matches is not there yet, make it
     if (matches[compId] == undefined) matches[compId] = [];
     //Finally register the new match
-    let passageA = fileA.id + "@" + indexToMarker(fileA.contents, indexA) + "-" + indexToMarker(fileA.contents, indexA + matchL);
-    let passageB = fileB.id + "@" + indexToMarker(fileB.contents, indexB) + "-" + indexToMarker(fileB.contents, indexB + matchL);
+    let passageA = fileA.id + "@" + indexToMarker(fileA, indexA) + "-" + indexToMarker(fileA, indexA + matchL);
+    let passageB = fileB.id + "@" + indexToMarker(fileB, indexB) + "-" + indexToMarker(fileB, indexB + matchL);
     //See if we have an already matching passage
     let isNewMatch = true;
     for (let passage of matches.passages) {
@@ -216,32 +220,23 @@ function registerMatch(fileA, fileB, indexA, indexB, matchL) {
 /**
  * Converts an index from a text into a marker (f.e. a[5], 
  * at the fifth a)
- * @param {String} text 
+ * @param {File} file 
  * @param {Integer} index 
  */
-function indexToMarker(text, index) {
+function indexToMarker(file, index) {
+    if(file.markers[index] != undefined){
+        return file.markers[index];
+    }
+    let text = file.contents;
     let char = text.charAt(index);
     let counter = 0;
     let prevText = text.substring(0, index);
     for (let c of prevText) {
         if (c === char) counter++;
     }
-    return char + "[" + counter + "]";
-}
-
-/**
- * Returns the similarity between two IDENTICAL LENGTH strings
- * as a floating point number, with 0 being completely different
- * and 1 being completely identical.
- * @param {String} stringA 
- * @param {String} stringB 
- */
-function getSimilarity(stringA, stringB) {
-    let same = 0;
-    for (let i = 0; i < stringA.length; i++) {
-        if (stringA.charAt(i) === stringB.charAt(i)) same++;
-    }
-    return same / stringA.length;
+    let marker = char + "[" + counter + "]";
+    file.markers[index] = marker;
+    return marker;
 }
 
 /**
