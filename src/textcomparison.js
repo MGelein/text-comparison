@@ -96,6 +96,7 @@ function compareAllFiles() {
 function compareFiles(fileA, fileB) {
     console.log("------------------------------");
     console.log("Starting comparison between " + fileA.desc + " and " + fileB.desc);
+    let startTime = (new Date()).getTime();
     //Find the shared n-grams
     let keysA = Object.keys(fileA.dict);
     let keysB = new Set(Object.keys(fileB.dict));
@@ -107,6 +108,8 @@ function compareFiles(fileA, fileB) {
     console.log("\tThese files share " + keysShared.length + " ngrams.");
     console.log("Starting expansion of shared ngrams...");
     expandSharedKeys(fileA, fileB, keysShared);
+    let endTime = (new Date().getTime());
+    console.log("The comparison took " + (endTime - startTime) + " ms");
 }
 
 /**
