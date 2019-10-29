@@ -1,6 +1,8 @@
 const { getFilesFromDescriptors, exportSave } = require("./file");
 //Saves the results of the comparison for each file
 const matches = {};
+//Matches that already have been expanded are saved here, this is to prevent duplication
+const covered = {};
 //the files used in this comparison
 const files = [];
 //If we keep whitespace in the comparison
@@ -13,6 +15,8 @@ var ngram = 0;
 var outputFile = "";
 //If we should also export the text of a match
 var fullText = false;
+//The maximum amount of strikes while moving any side of the match
+const MAX_STRIKES = 5;
 
 /**
  * Starts a comparison as described by the passed-on settings object
@@ -119,6 +123,10 @@ function compareFiles(fileA, fileB) {
  * @param {Array} keysShared 
  */
 function expandSharedKeys(fileA, fileB, keysShared) {
+    //What is the ID of this comparison
+    let compId = fileA.id + "_" + fileB.id;
+    //If the array of matches is not there yet, make it
+    if (matches[compId] == undefined) matches[compId] = [];
     //For each of the shared keys, find the occruences in both texts
     for (let sharedKey of keysShared) {
         let occsA = fileA.dict[sharedKey];
@@ -140,7 +148,8 @@ function expandSharedKeys(fileA, fileB, keysShared) {
  * @param {Integer} indexB 
  */
 function expandSharedKey(fileA, fileB, indexA, indexB) {
-    const MAX_STRIKES = 5;
+    //Now check if this key fall inside of something that already has been covered
+
     let strikes = MAX_STRIKES;
     let textA = fileA.contents;
     let textB = fileB.contents;
@@ -150,12 +159,6 @@ function expandSharedKey(fileA, fileB, indexA, indexB) {
     let leftChecked = false;
     //Try expanding as long as the expansion fits in the actual text
     while (indexA > 0 && indexB > 0 && indexA + matchL < textA.length && indexB + matchL < textB.length) {
-        same = 0;
-        for (let i = 0; i < matchL; i++) {
-            if (textA.charAt(indexA + i) === textB.charAt(indexB + i)) same++;
-        }
-        sim = same / matchL;
-
         //Expand to the correct side
         if (leftChecked) {
             matchL++;
@@ -163,6 +166,13 @@ function expandSharedKey(fileA, fileB, indexA, indexB) {
             indexA--;
             indexB--;
         }
+        
+        //Calculate similarity between 0-1
+        same = 0;
+        for (let i = 0; i < matchL; i++) {
+            if (textA.charAt(indexA + i) === textB.charAt(indexB + i)) same++;
+        }
+        sim = same / matchL;
 
         //See if the match is improving or not
         if (sim < prevSim) strikes--;
@@ -191,11 +201,14 @@ function expandSharedKey(fileA, fileB, indexA, indexB) {
  * @param {Integer} matchL 
  */
 function registerMatch(fileA, fileB, indexA, indexB, matchL) {
-    //What is the ID of this comparison
-    let compId = fileA.id + "_" + fileB.id;
-    //If the array of matches is not there yet, make it
-    if (matches[compId] == undefined) matches[compId] = [];
-    //Finally register the new match
+    //Register that we have registered this match
+    covered[idA].push({
+        idB: fileB.id,
+        iA: indexA,
+        iB: indexB,
+        l: matchL
+    });
+    //Register the new match
     let passageA = fileA.id + "@" + indexToMarker(fileA, indexA) + "-" + indexToMarker(fileA, indexA + matchL);
     let passageB = fileB.id + "@" + indexToMarker(fileB, indexB) + "-" + indexToMarker(fileB, indexB + matchL);
     //See if we have an already matching passage
