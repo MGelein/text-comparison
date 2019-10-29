@@ -100,11 +100,15 @@ function compareAllFiles() {
 function compareFiles(fileA, fileB) {
     console.log("------------------------------");
     console.log("Starting comparison between " + fileA.desc + " and " + fileB.desc);
+    //Start logging time
     let startTime = (new Date()).getTime();
+    //Create a new coverage array
+    if (!covered[fileA.id]) covered[fileA.id] = {};
+    if (!covered[fileA.id][fileB.id]) covered[fileA.id][fileB.id] = [];
     //Find the shared n-grams
     let keysA = Object.keys(fileA.dict);
     let keysB = new Set(Object.keys(fileB.dict));
-
+    //New method of filtering arrays
     let keysShared = Array.from(
         new Set(keysA.filter(key => keysB.has(key)))
     );
@@ -149,7 +153,15 @@ function expandSharedKeys(fileA, fileB, keysShared) {
  */
 function expandSharedKey(fileA, fileB, indexA, indexB) {
     //Now check if this key fall inside of something that already has been covered
-
+    for (match of covered[fileA.id][fileB.id]) {
+        if (match.startA <= indexA && match.endA >= indexA) {
+            if (match.startB <= indexB && match.endB >= indexB) {
+                //If we're here, this match has already been expanded
+                return;
+            }
+        }
+    }
+    //If we reach to here we need to do the full expansion
     let strikes = MAX_STRIKES;
     let textA = fileA.contents;
     let textB = fileB.contents;
@@ -166,7 +178,7 @@ function expandSharedKey(fileA, fileB, indexA, indexB) {
             indexA--;
             indexB--;
         }
-        
+
         //Calculate similarity between 0-1
         same = 0;
         for (let i = 0; i < matchL; i++) {
@@ -201,32 +213,19 @@ function expandSharedKey(fileA, fileB, indexA, indexB) {
  * @param {Integer} matchL 
  */
 function registerMatch(fileA, fileB, indexA, indexB, matchL) {
-    //Register that we have registered this match
-    covered[idA].push({
-        idB: fileB.id,
-        iA: indexA,
-        iB: indexB,
-        l: matchL
+    //Register this match in the coverage array
+    covered[fileA.id][fileB.id].push({
+        startA: indexA, startB: indexB, endA: indexA + matchL, endB: indexB + matchL
     });
     //Register the new match
     let passageA = fileA.id + "@" + indexToMarker(fileA, indexA) + "-" + indexToMarker(fileA, indexA + matchL);
     let passageB = fileB.id + "@" + indexToMarker(fileB, indexB) + "-" + indexToMarker(fileB, indexB + matchL);
-    //See if we have an already matching passage
-    let isNewMatch = true;
-    for (let passage of matches.passages) {
-        if (passage[0] === passageA && passage[fullText ? 2 : 1] === passageB) {
-            isNewMatch = false;
-            break;
-        }
-    }
-    //Only add the new match if it is not a duplicate of what we already have
-    if (isNewMatch) {
-        if (!fullText) matches.passages.push([passageA, passageB]);
-        else {
-            matches.passages.push([
-                passageA, fileA.contents.substr(indexA, matchL), passageB, fileB.contents.substr(indexB, matchL)
-            ]);
-        }
+    //No need for duplicate prevention at this stage, so just add in the right manner depending on if we want fullText
+    if (!fullText) matches.passages.push([passageA, passageB]);
+    else {
+        matches.passages.push([
+            passageA, fileA.contents.substr(indexA, matchL), passageB, fileB.contents.substr(indexB, matchL)
+        ]);
     }
 }
 
