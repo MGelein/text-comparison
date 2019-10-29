@@ -87,7 +87,8 @@ function createFileObject(description, textContents) {
     files.push({
         desc: description,
         contents: textContents,
-        id: files.length
+        id: files.length,
+        markers: {}
     });
     let index = pending.indexOf(description);
     pending.splice(index, 1);
